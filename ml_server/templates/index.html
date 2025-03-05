@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Generator</title>
+</head>
+<body>
+    <h2>Enter a natural language query:</h2>
+    <input type="text" id="queryInput" placeholder="Enter query...">
+    <button onclick="generateSQL()">Generate SQL</button>
+    <h3>Generated SQL:</h3>
+    <p id="result"></p>
+
+    <script>
+        function generateSQL() {
+            const queryText = document.getElementById("queryInput").value;
+
+            fetch("/generate_sql", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: queryText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerText = "SQL Query: " + data.sql_query;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
