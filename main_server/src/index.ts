@@ -1,6 +1,8 @@
 import express, { Express } from "express";
 import { PrismaClient } from "@prisma/client";
-import modelRoutes from './routes/modelRoutes'
+import modelRoutes from './routes/modelRoutes';
+import userRoutes from './routes/userRoutes';
+import dbContextRoutes from './routes/dbContextRoutes';
 import cors from "cors";
 
 export const prisma = new PrismaClient(); // Prisma Client
@@ -20,6 +22,8 @@ app.get("/", (req, res) => {
   res.json("Express + TypeScript Server");
 });
 app.use('/', modelRoutes);
+app.use('/user', userRoutes);
+app.use('/', dbContextRoutes);
 
 const startServer = async() => {
   try {

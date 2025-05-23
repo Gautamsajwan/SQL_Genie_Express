@@ -29,7 +29,7 @@ def generate_sql():
     sql_query = tokenizer.decode(output[0], skip_special_tokens=True)
 
     return jsonify({
-            "sql_query": sql_query
+        "sql_query": sql_query
     })
 
 

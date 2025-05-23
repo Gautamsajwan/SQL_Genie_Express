@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
 import "./globals.css";
+import { Poppins } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
+import { Toaster } from "sonner";
+import { AlertCircle, Info } from "lucide-react";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -18,8 +22,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={poppins.className}>{children}</body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        baseTheme: [dark],
+      }}
+    >
+      <html lang="en">
+        <body className={poppins.className}>
+          <Toaster
+            theme="dark"
+            position="bottom-right"
+            icons={{
+              info: <Info className="text-blue-400" />,
+              error: <AlertCircle className="text-red-400" />,
+            }}
+          />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
