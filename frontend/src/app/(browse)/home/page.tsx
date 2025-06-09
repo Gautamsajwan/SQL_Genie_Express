@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { GridBackground } from "@/components/ui/grid-background";
-import { Bolt, MoreHorizontal, PenSquare, Snowflake, Sparkle, SparkleIcon } from "lucide-react";
+import { Snowflake, SparkleIcon } from "lucide-react";
 import { toast } from "sonner";
 import { CopyBlock, shadesOfPurple } from "react-code-blocks";
 
@@ -87,7 +87,7 @@ export default function Home() {
       <main className="flex-1 relative overflow-hidden">
         <GridBackground />
         <div className="relative h-full flex flex-col items-center justify-center px-4">
-          <div className="py-6 w-full max-w-3xl space-y-8">
+          <div className="py-6 w-full max-w-4xl space-y-8">
             <h1 className="text-3xl font-semibold text-white text-center">
               Tell us what kind of SQL query to generate?
             </h1>
