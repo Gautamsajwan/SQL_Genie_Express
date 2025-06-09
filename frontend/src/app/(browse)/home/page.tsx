@@ -25,7 +25,7 @@ export default function Home() {
   const generateSqlQueryy = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:4000/generatesql", {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesql`, {
         text: inputValue,
       });
 
@@ -52,18 +52,17 @@ export default function Home() {
         });
       }
 
-      const response = await axios.post("http://localhost:4000/generatesqlll", {
+
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`, {
         queryDescription: inputValue,
         schema: JSON.parse(localStorage.getItem("dbSchema") || "{}"),
       });
 
-      const response2 = await axios.post("http://localhost:4000/executeQuery", {
+      const response2 = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/executeQuery`, {
         connectionString: JSON.parse(localStorage.getItem("connectionDetails")!).connectionString,
         schema: JSON.parse(localStorage.getItem("dbSchema") || "{}"),
         sqlQuery: response.data.query,
       })
-
-      console.log("Response from executeQuery:", response2);
 
       setDataRows(response2.data.data);
       setGeneratedQuery(response.data.query);

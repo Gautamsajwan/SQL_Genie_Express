@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
   // Do something with the payload
   const eventType = evt.type;
-  const apiBaseUrl = "http://localhost:4000";
+  const apiBaseUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}`;
 
   if (eventType === "user.created") {
     await fetch(`${apiBaseUrl}/user/register`, {
