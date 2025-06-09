@@ -12,7 +12,8 @@ const app = express();
 
 // middlewares
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Adjust the origin as needed
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }))
 app.use(express.json());
