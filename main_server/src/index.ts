@@ -1,4 +1,4 @@
-import express, { Express } from "express";
+import express from "express";
 import { PrismaClient } from "@prisma/client";
 import modelRoutes from './routes/modelRoutes';
 import userRoutes from './routes/userRoutes';
@@ -19,7 +19,7 @@ app.use(express.json());
 
 // routes
 app.get("/", (req, res) => {
-  res.json("Express + TypeScript Server");
+  res.send("Express + TypeScript Server");
 });
 app.use('/', modelRoutes);
 app.use('/user', userRoutes);
