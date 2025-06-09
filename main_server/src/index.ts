@@ -6,13 +6,11 @@ import dbContextRoutes from './routes/dbContextRoutes';
 import cors from "cors";
 
 export const prisma = new PrismaClient(); // Prisma Client
-
-const port = process.env.PORT || 4000;
 const app = express();
 
 // middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Adjust the origin as needed
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }))
@@ -26,14 +24,13 @@ app.use('/', modelRoutes);
 app.use('/user', userRoutes);
 app.use('/', dbContextRoutes);
 
-const startServer = async() => {
-  try {
-    app.listen(port, () => {
-      console.log(`Server is running on http://localhost:${port}`);
-    });
-  } catch (error: any) {
-    console.error(error.message)
-  }
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
 }
 
-startServer();
+// Export for Vercel (serverless)
+export default app;
