@@ -84,25 +84,25 @@ export function Sidebar() {
   );
 }
 
-function SidebarItem({
-  icon,
-  text,
-  active = false,
-}: {
-  icon: React.ReactNode;
-  text: string;
-  active?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center space-x-3 px-3 py-3 rounded-lg cursor-pointer transition-colors ${
-        active
-          ? "bg-gray-800 text-white"
-          : "text-gray-100 hover:bg-gray-800/50 hover:text-gray-200"
-      }`}
-    >
-      {icon}
-      <span className="text-sm font-medium">{text}</span>
-    </div>
-  );
-}
+// function SidebarItem({
+//   icon,
+//   text,
+//   active = false,
+// }: {
+//   icon: React.ReactNode;
+//   text: string;
+//   active?: boolean;
+// }) {
+//   return (
+//     <div
+//       className={`flex items-center space-x-3 px-3 py-3 rounded-lg cursor-pointer transition-colors ${
+//         active
+//           ? "bg-gray-800 text-white"
+//           : "text-gray-100 hover:bg-gray-800/50 hover:text-gray-200"
+//       }`}
+//     >
+//       {icon}
+//       <span className="text-sm font-medium">{text}</span>
+//     </div>
+//   );
+// }

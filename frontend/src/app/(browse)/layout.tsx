@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense } from "react";
+import React, { ReactNode } from "react";
 import Navbar from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar/index";
 

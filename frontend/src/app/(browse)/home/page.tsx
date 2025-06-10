@@ -22,25 +22,25 @@ export default function Home() {
   };
 
   // this is our model api
-  const generateSqlQueryy = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesql`, {
-        text: inputValue,
-      });
+  // const generateSqlQueryy = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesql`, {
+  //       text: inputValue,
+  //     });
 
-      if (response.status !== 200) {
-        console.error("Failed to generate SQL query");
-        return;
-      }
+  //     if (response.status !== 200) {
+  //       console.error("Failed to generate SQL query");
+  //       return;
+  //     }
 
-      setGeneratedQuery(response.data.sql_query);
-    } catch (error) {
-      console.error("Error generating SQL query:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     setGeneratedQuery(response.data.sql_query);
+  //   } catch (error) {
+  //     console.error("Error generating SQL query:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // gemini ;-
   const generateSqlQuery = async () => {
