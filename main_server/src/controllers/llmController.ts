@@ -88,13 +88,11 @@ export const executeQueryController = async (req: Request, res: Response): Promi
 
       Dont add any extra comments or explanations.
       `;
-      let formattedSqlQuery = await generate(prompt);
+    let formattedSqlQuery = await generate(prompt);
 
     if (formattedSqlQuery.startsWith('```sql')) {
       formattedSqlQuery = formattedSqlQuery.replace(/```sql|```/g, '').trim();
     }
-
-    console.log("formatted query: ", formattedSqlQuery)
 
     // Execute the SQL query
     const result = await client.query(formattedSqlQuery);
