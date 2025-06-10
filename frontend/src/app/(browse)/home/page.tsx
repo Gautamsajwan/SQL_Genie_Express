@@ -10,17 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import dynamic from "next/dynamic";
 
 // Dynamically import components with no SSR
-const CopyBlock = dynamic(
-  () => import("react-code-blocks").then((mod) => ({ default: mod.CopyBlock })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="p-4 bg-gray-900 rounded-lg shadow-md">
-        <div className="text-gray-300">Loading code block...</div>
-      </div>
-    ),
-  }
-);
+// const CopyBlock = dynamic(
+//   () => import("react-code-blocks").then((mod) => ({ default: mod.CopyBlock })),
+//   {
+//     ssr: false,
+//     loading: () => (
+//       <div className="p-4 bg-gray-900 rounded-lg shadow-md">
+//         <div className="text-gray-300">Loading code block...</div>
+//       </div>
+//     ),
+//   }
+// );
 
 const TableMinimal = dynamic(() => import("../_components/table"), {
   ssr: false,
@@ -33,7 +33,7 @@ export default function Home() {
   const [dataRows, setDataRows] = useState([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClient, setIsClient] = useState(false);
-  const [codeTheme, setCodeTheme] = useState<any>(null);
+  // const [codeTheme, setCodeTheme] = useState<any>(null);
   const [hasConnectionDetails, setHasConnectionDetails] = useState(false);
 
   useEffect(() => {
@@ -53,13 +53,13 @@ export default function Home() {
     checkConnectionDetails();
 
     // Load the theme on client side
-    import("react-code-blocks")
-      .then((mod) => {
-        setCodeTheme(mod.shadesOfPurple);
-      })
-      .catch((error) => {
-        console.error("Error loading code theme:", error);
-      });
+    // import("react-code-blocks")
+    //   .then((mod) => {
+    //     setCodeTheme(mod.shadesOfPurple);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error loading code theme:", error);
+    //   });
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -223,14 +223,17 @@ export default function Home() {
 
               <div className="p-4 bg-gray-900 rounded-lg shadow-md">
                 <Suspense fallback={<div className="text-gray-300">Loading code block...</div>}>
-                  <CopyBlock
+                  {/* <CopyBlock
                     text={generatedQuery || "Your SQL query will appear here..."}
                     language="sql"
                     showLineNumbers={true}
                     theme={codeTheme || {}}
                     codeBlock={true}
                     copied={false}
-                  />
+                  /> */}
+                  <div>
+                    {generatedQuery}
+                  </div>
                 </Suspense>
               </div>
             </div>
