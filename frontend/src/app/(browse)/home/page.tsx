@@ -45,6 +45,7 @@ export default function Home() {
   // gemini ;-
   const generateSqlQuery = async () => {
     setIsLoading(true);
+
     try {
       if (!inputValue) {
         return toast.error("Empty input detected", {
@@ -58,25 +59,36 @@ export default function Home() {
         return;
       }
 
-      const dbSchema = JSON.parse(window.localStorage.getItem("dbSchema") || "{}");
-      const connectionDetailsRaw = window.localStorage.getItem("connectionDetails");
+      // Delay access to localStorage until after type check
+      const dbSchemaRaw = window.localStorage.getItem("dbSchema");
+      const dbSchema = dbSchemaRaw ? JSON.parse(dbSchemaRaw) : {};
+
+      const connectionDetailsRaw =
+        window.localStorage.getItem("connectionDetails");
       if (!connectionDetailsRaw) {
         toast.error("No connection details found in localStorage.");
         setIsLoading(false);
         return;
       }
+
       const connectionDetails = JSON.parse(connectionDetailsRaw);
 
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`, {
-        queryDescription: inputValue,
-        schema: dbSchema,
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`,
+        {
+          queryDescription: inputValue,
+          schema: dbSchema,
+        }
+      );
 
-      const response2 = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/executeQuery`, {
-        connectionString: connectionDetails.connectionString,
-        schema: dbSchema,
-        sqlQuery: response.data.query,
-      })
+      const response2 = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/executeQuery`,
+        {
+          connectionString: connectionDetails.connectionString,
+          schema: dbSchema,
+          sqlQuery: response.data.query,
+        }
+      );
 
       setDataRows(response2.data.data);
       setGeneratedQuery(response.data.query);
@@ -171,7 +183,7 @@ export default function Home() {
             </div>
 
             <div>
-              <TableMinimal data={dataRows}/>
+              <TableMinimal data={dataRows} />
             </div>
           </div>
         </div>
