@@ -27,14 +27,6 @@ const TableMinimal = dynamic(() => import("../_components/table"), {
   loading: () => <div className="text-white">Loading table...</div>,
 });
 
-// Import the theme separately
-let shadesOfPurple: any;
-if (typeof window !== "undefined") {
-  import("react-code-blocks").then((mod) => {
-    shadesOfPurple = mod.shadesOfPurple;
-  });
-}
-
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [generatedQuery, setGeneratedQuery] = useState("");
@@ -164,7 +156,7 @@ export default function Home() {
                       text={generatedQuery || "Your SQL query will appear here..."}
                       language="sql"
                       showLineNumbers={true}
-                      theme={codeTheme || {}}
+                      theme={codeTheme}
                       codeBlock={true}
                       copied={false}
                     />
