@@ -9,7 +9,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import dynamic from "next/dynamic";
 
-// Dynamically import components that might cause SSR issues
+// Dynamically import components with no SSR
 const CopyBlock = dynamic(
   () => import("react-code-blocks").then((mod) => ({ default: mod.CopyBlock })),
   {
@@ -34,13 +34,32 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isClient, setIsClient] = useState(false);
   const [codeTheme, setCodeTheme] = useState<any>(null);
+  const [hasConnectionDetails, setHasConnectionDetails] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    
+    // Check if we have connection details
+    const checkConnectionDetails = () => {
+      try {
+        const connectionDetailsRaw = localStorage.getItem("connectionDetails");
+        setHasConnectionDetails(!!connectionDetailsRaw);
+      } catch (error) {
+        console.error("Error checking localStorage:", error);
+        setHasConnectionDetails(false);
+      }
+    };
+
+    checkConnectionDetails();
+
     // Load the theme on client side
-    import("react-code-blocks").then((mod) => {
-      setCodeTheme(mod.shadesOfPurple);
-    });
+    import("react-code-blocks")
+      .then((mod) => {
+        setCodeTheme(mod.shadesOfPurple);
+      })
+      .catch((error) => {
+        console.error("Error loading code theme:", error);
+      });
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -48,32 +67,52 @@ export default function Home() {
   };
 
   const generateSqlQuery = async () => {
+    // Early return if not on client side
+    if (!isClient) {
+      toast.error("Please wait for the page to load completely.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      if (!inputValue) {
+      if (!inputValue.trim()) {
         toast.error("Empty input detected", {
           description: "Please provide an input before proceeding",
         });
-        setIsLoading(false);
         return;
       }
 
-      if (typeof window === "undefined") {
-        toast.error("This feature is only available in the browser.");
-        setIsLoading(false);
+      // Check for localStorage availability
+      let dbSchema = {};
+      let connectionDetails = null;
+
+      try {
+        const dbSchemaRaw = localStorage.getItem("dbSchema");
+        dbSchema = dbSchemaRaw ? JSON.parse(dbSchemaRaw) : {};
+        
+        const connectionDetailsRaw = localStorage.getItem("connectionDetails");
+        if (!connectionDetailsRaw) {
+          toast.error("No connection details found", {
+            description: "Please set up your database connection first.",
+          });
+          return;
+        }
+        connectionDetails = JSON.parse(connectionDetailsRaw);
+      } catch (error) {
+        console.error("Error accessing localStorage:", error);
+        toast.error("Error accessing stored data", {
+          description: "Please refresh the page and try again.",
+        });
         return;
       }
 
-      const dbSchema = JSON.parse(window.localStorage.getItem("dbSchema") || "{}");
-      const connectionDetailsRaw = window.localStorage.getItem("connectionDetails");
-      
-      if (!connectionDetailsRaw) {
-        toast.error("No connection details found in localStorage.");
-        setIsLoading(false);
+      // Check if we have the required environment variable
+      if (!process.env.NEXT_PUBLIC_SERVER_URL) {
+        toast.error("Configuration error", {
+          description: "Server URL is not configured.",
+        });
         return;
       }
-      
-      const connectionDetails = JSON.parse(connectionDetailsRaw);
 
       const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`, {
         queryDescription: inputValue,
@@ -86,12 +125,20 @@ export default function Home() {
         sqlQuery: response.data.query,
       });
 
-      setDataRows(response2.data.data);
-      setGeneratedQuery(response.data.query);
+      setDataRows(response2.data.data || []);
+      setGeneratedQuery(response.data.query || "");
+      
+      toast.success("SQL query generated successfully!");
     } catch (error: any) {
+      console.error("Error generating SQL query:", error);
+      
       if (error.response && error.response.status === 400) {
         toast.error("Error generating SQL query", {
           description: error.response.data.customMessage || "Bad request",
+        });
+      } else if (error.code === 'ERR_NETWORK') {
+        toast.error("Network error", {
+          description: "Please check your internet connection and try again.",
         });
       } else {
         toast.error("Error generating SQL query", {
@@ -103,6 +150,23 @@ export default function Home() {
     }
   };
 
+  // Don't render until client-side hydration is complete
+  if (!isClient) {
+    return (
+      <div className="pt-16 flex w-full min-h-screen bg-black">
+        <main className="flex-1 relative overflow-hidden">
+          <GridBackground />
+          <div className="relative h-full flex flex-col items-center justify-center px-4">
+            <div className="text-white text-center">
+              <Snowflake className="w-8 h-8 animate-spin mx-auto mb-4" />
+              <p>Loading...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-16 flex w-full min-h-screen bg-black">
       <main className="flex-1 relative overflow-hidden">
@@ -112,6 +176,14 @@ export default function Home() {
             <h1 className="text-3xl font-semibold text-white text-center">
               Tell us what kind of SQL query to generate?
             </h1>
+
+            {!hasConnectionDetails && (
+              <div className="bg-yellow-900/50 border border-yellow-600 rounded-lg p-4 text-yellow-200">
+                <p className="text-sm">
+                  ⚠️ No database connection found. Please set up your database connection first.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="relative p-3 bg-gray-900/50 rounded-lg">
@@ -127,7 +199,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-2 justify-center">
                 <Button
                   onClick={generateSqlQuery}
-                  disabled={isLoading}
+                  disabled={isLoading || !hasConnectionDetails}
                   className="bg-indigo-500 rounded-lg px-4 py-3 text-lg text-gray-100 hover:bg-green-500 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <SparkleIcon className="w-6 h-6" />
@@ -149,36 +221,24 @@ export default function Home() {
                 )}
               </div>
 
-              {isClient ? (
-                <div className="p-4 bg-gray-900 rounded-lg shadow-md">
-                  <Suspense fallback={<div className="text-gray-300">Loading code block...</div>}>
-                    <CopyBlock
-                      text={generatedQuery || "Your SQL query will appear here..."}
-                      language="sql"
-                      showLineNumbers={true}
-                      theme={codeTheme}
-                      codeBlock={true}
-                      copied={false}
-                    />
-                  </Suspense>
-                </div>
-              ) : (
-                <div className="p-4 bg-gray-900 rounded-lg shadow-md">
-                  <div className="text-gray-300 font-mono text-sm p-4 bg-gray-800 rounded">
-                    {generatedQuery || "Your SQL query will appear here..."}
-                  </div>
-                </div>
-              )}
+              <div className="p-4 bg-gray-900 rounded-lg shadow-md">
+                <Suspense fallback={<div className="text-gray-300">Loading code block...</div>}>
+                  <CopyBlock
+                    text={generatedQuery || "Your SQL query will appear here..."}
+                    language="sql"
+                    showLineNumbers={true}
+                    theme={codeTheme || {}}
+                    codeBlock={true}
+                    copied={false}
+                  />
+                </Suspense>
+              </div>
             </div>
 
             <div>
-              {isClient ? (
-                <Suspense fallback={<div className="text-white">Loading table...</div>}>
-                  <TableMinimal data={dataRows} />
-                </Suspense>
-              ) : (
-                <div className="text-white">Table will load after page initialization...</div>
-              )}
+              <Suspense fallback={<div className="text-white">Loading table...</div>}>
+                <TableMinimal data={dataRows} />
+              </Suspense>
             </div>
           </div>
         </div>
