@@ -4,53 +4,66 @@ import { Button } from "@/components/ui/button";
 import { GridBackground } from "@/components/ui/grid-background";
 import { Snowflake, SparkleIcon } from "lucide-react";
 import { toast } from "sonner";
-import { CopyBlock, shadesOfPurple } from "react-code-blocks";
-
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import TableMinimal from "../_components/table";
+import dynamic from "next/dynamic";
+
+// Dynamically import components that might cause SSR issues
+const CopyBlock = dynamic(
+  () => import("react-code-blocks").then((mod) => ({ default: mod.CopyBlock })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 bg-gray-900 rounded-lg shadow-md">
+        <div className="text-gray-300">Loading code block...</div>
+      </div>
+    ),
+  }
+);
+
+const TableMinimal = dynamic(() => import("../_components/table"), {
+  ssr: false,
+  loading: () => <div className="text-white">Loading table...</div>,
+});
+
+// Import the theme separately
+let shadesOfPurple: any;
+if (typeof window !== "undefined") {
+  import("react-code-blocks").then((mod) => {
+    shadesOfPurple = mod.shadesOfPurple;
+  });
+}
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [generatedQuery, setGeneratedQuery] = useState("");
   const [dataRows, setDataRows] = useState([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState(false);
+  const [codeTheme, setCodeTheme] = useState<any>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Load the theme on client side
+    import("react-code-blocks").then((mod) => {
+      setCodeTheme(mod.shadesOfPurple);
+    });
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
   };
 
-  // this is our model api
-  // const generateSqlQueryy = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesql`, {
-  //       text: inputValue,
-  //     });
-
-  //     if (response.status !== 200) {
-  //       console.error("Failed to generate SQL query");
-  //       return;
-  //     }
-
-  //     setGeneratedQuery(response.data.sql_query);
-  //   } catch (error) {
-  //     console.error("Error generating SQL query:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // gemini ;-
   const generateSqlQuery = async () => {
     setIsLoading(true);
-
     try {
       if (!inputValue) {
-        return toast.error("Empty input detected", {
+        toast.error("Empty input detected", {
           description: "Please provide an input before proceeding",
         });
+        setIsLoading(false);
+        return;
       }
 
       if (typeof window === "undefined") {
@@ -59,47 +72,38 @@ export default function Home() {
         return;
       }
 
-      // Delay access to localStorage until after type check
-      const dbSchemaRaw = window.localStorage.getItem("dbSchema");
-      const dbSchema = dbSchemaRaw ? JSON.parse(dbSchemaRaw) : {};
-
-      const connectionDetailsRaw =
-        window.localStorage.getItem("connectionDetails");
+      const dbSchema = JSON.parse(window.localStorage.getItem("dbSchema") || "{}");
+      const connectionDetailsRaw = window.localStorage.getItem("connectionDetails");
+      
       if (!connectionDetailsRaw) {
         toast.error("No connection details found in localStorage.");
         setIsLoading(false);
         return;
       }
-
+      
       const connectionDetails = JSON.parse(connectionDetailsRaw);
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`,
-        {
-          queryDescription: inputValue,
-          schema: dbSchema,
-        }
-      );
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/generatesqlll`, {
+        queryDescription: inputValue,
+        schema: dbSchema,
+      });
 
-      const response2 = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/executeQuery`,
-        {
-          connectionString: connectionDetails.connectionString,
-          schema: dbSchema,
-          sqlQuery: response.data.query,
-        }
-      );
+      const response2 = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URL}/executeQuery`, {
+        connectionString: connectionDetails.connectionString,
+        schema: dbSchema,
+        sqlQuery: response.data.query,
+      });
 
       setDataRows(response2.data.data);
       setGeneratedQuery(response.data.query);
     } catch (error: any) {
       if (error.response && error.response.status === 400) {
         toast.error("Error generating SQL query", {
-          description: error.response.data.customMessage,
+          description: error.response.data.customMessage || "Bad request",
         });
       } else {
         toast.error("Error generating SQL query", {
-          description: error.message,
+          description: error.message || "An unexpected error occurred",
         });
       }
     } finally {
@@ -129,19 +133,13 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap gap-2 justify-center">
-                {/* <Button
-                  variant="ghost"
-                  className="bg-gray-900/50 text-gray-300 hover:bg-gray-800/50"
-                >
-                  <Bolt className="w-4 h-4 mr-1" />
-                  Refine Query
-                </Button> */}
                 <Button
                   onClick={generateSqlQuery}
-                  className="bg-indigo-500 rounded-lg px-4 py-3 text-lg text-gray-100 hover:bg-green-500 transition-all duration-200 cursor-pointer"
+                  disabled={isLoading}
+                  className="bg-indigo-500 rounded-lg px-4 py-3 text-lg text-gray-100 hover:bg-green-500 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <SparkleIcon className="w-6 h-6" />
-                  <span>Generate Query</span>
+                  <span>{isLoading ? "Generating..." : "Generate Query"}</span>
                 </Button>
               </div>
             </div>
@@ -159,31 +157,36 @@ export default function Home() {
                 )}
               </div>
 
-              {/* <code className="relative p-3 w-full block min-h-32 border-t-[2.5px] border-gray-400 text-sm text-gray-300">
-                {isLoading ? (
-                  <Spinner
-                    className="text-blue-400 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                    size="large"
-                  />
-                ) : (
-                  generatedQuery
-                )}
-              </code> */}
-
-              <div className="p-4 bg-gray-900 rounded-lg shadow-md">
-                <CopyBlock
-                  text={generatedQuery || "Your SQL query will appear here..."}
-                  language={"sql"}
-                  showLineNumbers={true}
-                  theme={shadesOfPurple}
-                  codeBlock={true}
-                  copied={false}
-                />
-              </div>
+              {isClient ? (
+                <div className="p-4 bg-gray-900 rounded-lg shadow-md">
+                  <Suspense fallback={<div className="text-gray-300">Loading code block...</div>}>
+                    <CopyBlock
+                      text={generatedQuery || "Your SQL query will appear here..."}
+                      language="sql"
+                      showLineNumbers={true}
+                      theme={codeTheme || {}}
+                      codeBlock={true}
+                      copied={false}
+                    />
+                  </Suspense>
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-900 rounded-lg shadow-md">
+                  <div className="text-gray-300 font-mono text-sm p-4 bg-gray-800 rounded">
+                    {generatedQuery || "Your SQL query will appear here..."}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
-              <TableMinimal data={dataRows} />
+              {isClient ? (
+                <Suspense fallback={<div className="text-white">Loading table...</div>}>
+                  <TableMinimal data={dataRows} />
+                </Suspense>
+              ) : (
+                <div className="text-white">Table will load after page initialization...</div>
+              )}
             </div>
           </div>
         </div>
