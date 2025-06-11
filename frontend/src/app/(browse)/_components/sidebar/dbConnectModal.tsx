@@ -31,6 +31,16 @@ export function DbConnectionModal({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const setLocalStorageItem = (key: string, value: string) => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (error) {
+        console.error(`Error setting localStorage item ${key}:`, error);
+      }
+    }
+  };
+
   const handleConnect = async () => {
     if (!connectionString) {
       alert("Please enter a connection string");
@@ -50,14 +60,15 @@ export function DbConnectionModal({
       }
 
       const data = await response.json();
-      localStorage.setItem("dbSchema", JSON.stringify(data.schema));
-      localStorage.setItem(
-        'connectionDetails',
-        JSON.stringify({
-          connectionString: connectionString,
-          connectedAt: new Date().toISOString(),
-        }),
-      );
+      setLocalStorageItem("dbSchema", JSON.stringify(data.schema));
+      
+      const connectionDetails = {
+        connectionString: connectionString.trim(),
+        connectedAt: new Date().toISOString(),
+      };
+      
+      setLocalStorageItem("connectionDetails", JSON.stringify(connectionDetails));
+      
       setConnectionDetails(connectionString, new Date().toISOString());
 
       setOpen(false);

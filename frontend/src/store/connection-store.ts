@@ -1,32 +1,46 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-type connectionState = {
-  detailsAvailable: boolean,
-  dbURL: string,
-  createdAt: string,
-  setConnectionDetails: (dbURL: string, createdAt: string) => void,
-  eraseConnectionDetails: () => void,
+interface ConnectionState {
+  detailsAvailable: boolean
+  dbURL: string
+  createdAt: string
+  setConnectionDetails: (dbURL: string, createdAt: string) => void
+  eraseConnectionDetails: () => void
 }
 
-export const useConnectionStore = create<connectionState>((set) => ({
-  detailsAvailable: typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('connectionDetails') || '{}').connectionString ? true : false,
-  dbURL: typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem('connectionDetails') || '{}').connectionString || '' : '',
-  createdAt: typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem('connectionDetails') || '{}').connectedAt || '' : '',
-
-  setConnectionDetails: (dbURL: string, createdAt: string) => {
-    set((state) => ({
-      ...state,
-      detailsAvailable: true,
-      dbURL,
-      createdAt,
-    }))
-  },
-  eraseConnectionDetails: () => {
-    set((state) => ({
-      ...state,
+export const useConnectionStore = create<ConnectionState>()(
+  persist(
+    (set) => ({
       detailsAvailable: false,
       dbURL: '',
       createdAt: '',
-    }))
-  },
-}))
+
+      setConnectionDetails: (dbURL: string, createdAt: string) => {
+        set({
+          detailsAvailable: true,
+          dbURL,
+          createdAt,
+        })
+      },
+
+      eraseConnectionDetails: () => {
+        set({
+          detailsAvailable: false,
+          dbURL: '',
+          createdAt: '',
+        })
+      },
+    }),
+    {
+      name: 'connection-details', // localStorage key
+      storage: createJSONStorage(() => 
+        typeof window !== 'undefined' ? localStorage : {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        }
+      ),
+    }
+  )
+)

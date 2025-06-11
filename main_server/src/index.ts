@@ -4,15 +4,18 @@ import modelRoutes from './routes/modelRoutes';
 import userRoutes from './routes/userRoutes';
 import dbContextRoutes from './routes/dbContextRoutes';
 import cors from "cors";
+import 'dotenv/config'
 
 export const prisma = new PrismaClient(); // Prisma Client
 const app = express();
 
+console.log(process.env.CORS_ORIGIN)
+
 // middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: process.env.CORS_ORIGIN,
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  credentials: true,
 }))
 app.use(express.json());
 

@@ -6,15 +6,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DbConnectionModal } from "./dbConnectModal";
 import { Button } from "@/components/ui/button";
 import { Cable } from "lucide-react";
 import { useConnectionStore } from "@/store/connection-store";
+import nextDynamic from 'next/dynamic';
+
+const DbConnectionModal = nextDynamic(() =>
+  import('./dbConnectModal').then((mod) => ({ default: mod.DbConnectionModal })), {
+    ssr: false,
+    loading: () => <div>Loading modal...</div>,
+});
 
 export function Sidebar() {
   const { detailsAvailable, dbURL, createdAt, eraseConnectionDetails } = useConnectionStore(
     (state) => state,
   )
+
+  const handleDisconnect = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("connectionDetails");
+      localStorage.removeItem("dbSchema");
+      eraseConnectionDetails();
+    }
+  }
 
   return (
     <div className="fixed top-0 left-0 z-1 h-screen w-64 bg-[rgb(11,15,20)] border-r-[3px] border-gray-800 p-4">
@@ -23,11 +37,7 @@ export function Sidebar() {
           <Button
             variant="default"
             className="w-full bg-red-400/80 hover:bg-red-400 transition"
-            onClick={() => {
-              localStorage.removeItem("connectionDetails");
-              localStorage.removeItem("dbSchema");
-              eraseConnectionDetails();
-            }}
+            onClick={handleDisconnect}
           >
             Disconnect database
           </Button>
